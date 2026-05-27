@@ -30,11 +30,12 @@ Write-Host "  ======================================" -ForegroundColor Cyan
 Write-Host ""
 
 # --- Step 1: Check prerequisites ---
-Write-Step 1 5 "Checking prerequisites..."
+Write-Step 1 4 "Checking prerequisites..."
 
 # Node.js
 try {
     $nodeVer = (node --version 2>$null)
+    if (-not $nodeVer) { throw "not found" }
     $nodeMajor = [int]($nodeVer -replace 'v(\d+)\..*', '$1')
     if ($nodeMajor -lt 22) {
         Write-Err "Node.js $nodeVer found, but 22+ required"
@@ -48,10 +49,15 @@ try {
 }
 
 # pnpm
+$hasPnpm = $false
 try {
     $pnpmVer = (pnpm --version 2>$null)
+    if ($pnpmVer) { $hasPnpm = $true }
+} catch {}
+
+if ($hasPnpm) {
     Write-OK "pnpm $pnpmVer"
-} catch {
+} else {
     Write-Host "  --> Installing pnpm..." -ForegroundColor Yellow
     npm install -g pnpm
     Write-OK "pnpm installed"
@@ -60,6 +66,7 @@ try {
 # Python
 try {
     $pyVer = (python --version 2>$null)
+    if (-not $pyVer) { throw "not found" }
     Write-OK "$pyVer"
 } catch {
     Write-Err "Python not found. Install from https://python.org"
@@ -69,6 +76,7 @@ try {
 # Git
 try {
     $gitVer = (git --version 2>$null)
+    if (-not $gitVer) { throw "not found" }
     Write-OK "$gitVer"
 } catch {
     Write-Err "Git not found. Install from https://git-scm.com"
@@ -76,7 +84,7 @@ try {
 }
 
 # --- Step 2: Clone or update ---
-Write-Step 2 5 "Installing to $INSTALL_DIR..."
+Write-Step 2 4 "Installing to $INSTALL_DIR..."
 
 if (Test-Path "$INSTALL_DIR\.git") {
     Write-Host "  --> Existing installation found. Updating..." -ForegroundColor Yellow
@@ -92,28 +100,15 @@ if (Test-Path "$INSTALL_DIR\.git") {
 }
 Write-OK "Repository ready"
 
-# --- Step 3: Install dependencies ---
-Write-Step 3 5 "Installing dependencies..."
+# --- Step 3: Install dependencies + Tree-sitter ---
+Write-Step 3 4 "Installing dependencies and Tree-sitter parsers..."
 Push-Location $PLUGIN_DIR
-pnpm install --no-frozen-lockfile 2>$null
+pnpm install
 Pop-Location
 Write-OK "Dependencies installed"
 
-# --- Step 4: Approve & build Tree-sitter ---
-Write-Step 4 5 "Building Tree-sitter parsers..."
-Push-Location $PLUGIN_DIR
-
-# Auto-approve builds
-try {
-    "a`ny`n" | pnpm approve-builds 2>$null
-    Write-OK "Tree-sitter parsers built"
-} catch {
-    Write-Host "  --> Run manually: cd $PLUGIN_DIR; pnpm approve-builds" -ForegroundColor Yellow
-}
-Pop-Location
-
-# --- Step 5: Build core engine ---
-Write-Step 5 5 "Building CodeX-Ray core engine..."
+# --- Step 4: Build core engine ---
+Write-Step 4 4 "Building CodeX-Ray core engine..."
 Push-Location $PLUGIN_DIR
 pnpm --filter @codex-ray/core build
 Pop-Location
