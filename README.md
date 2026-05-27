@@ -89,58 +89,253 @@ codex-ray-plugin/
 
 ---
 
-## المتطلبات
+## 📋 دليل الاستخدام خطوة بخطوة
 
-- **Node.js** ≥ 22
-- **pnpm** ≥ 10
+### الخطوة 1: تثبيت المتطلبات
 
-## التثبيت (مرة واحدة)
+تحتاج 3 أدوات مُثبتة على جهازك:
+
+| الأداة | الإصدار المطلوب | التثبيت |
+|--------|----------------|---------|
+| **Node.js** | ≥ 22 | [nodejs.org](https://nodejs.org) |
+| **pnpm** | ≥ 10 | `npm install -g pnpm` |
+| **Python** | ≥ 3.10 | [python.org](https://python.org) |
+
+تحقق من التثبيت:
+```bash
+node --version    # يجب أن يظهر v22.x.x أو أعلى
+pnpm --version    # يجب أن يظهر 10.x.x أو أعلى
+python --version  # يجب أن يظهر 3.10.x أو أعلى
+```
+
+### الخطوة 2: تثبيت CodeX-Ray (مرة واحدة فقط)
 
 ```bash
+# 1. ادخل مجلد الأداة
 cd codex-ray-plugin
+
+# 2. ثبّت كل التبعيات (Tree-sitter + محللات اللغات)
 pnpm install
+
+# 3. عند ظهور approve-builds — اختر الكل واوافق
+pnpm approve-builds
+# اضغط 'a' لاختيار الكل، ثم Enter، ثم 'y' للموافقة
+
+# 4. ابنِ محرك التحليل
 pnpm --filter @codex-ray/core build
+```
+
+> ✅ بعد هذه الخطوة، CodeX-Ray جاهزة للاستخدام. لا تحتاج إعادة التثبيت مرة أخرى.
+
+### الخطوة 3: تحليل أي مشروع
+
+#### الطريقة A: عبر Antigravity (الأسهل)
+
+افتح أي محادثة مع Antigravity واطلب:
+
+```
+حلل المشروع c:\path\to\my-project
+```
+
+أو بالإنجليزية:
+```
+Analyze the project at c:\path\to\my-project using CodeX-Ray
+```
+
+Antigravity سيقوم تلقائياً بتشغيل الأداة عبر 7 مراحل وينتج `knowledge-graph.json`.
+
+#### الطريقة B: يدوياً من سطر الأوامر
+
+```bash
+# حدد مسار مشروعك
+$PROJECT = "c:\path\to\my-project"
+$SKILL   = "c:\path\to\CodeX-Ray\codex-ray-plugin\skills\understand"
+
+# المرحلة 1: مسح الملفات
+node "$SKILL\scan-project.mjs" "$PROJECT"
+
+# المرحلة 1.5: تقسيم الدفعات
+node "$SKILL\compute-batches.mjs" "$PROJECT"
+
+# المرحلة 2: استخراج البنية لكل ملف
+node "$SKILL\extract-structure.mjs" "$PROJECT"
+
+# المرحلة 2 (دمج): تجميع النتائج
+python "$SKILL\merge-batch-graphs.py" "$PROJECT"
+
+# المرحلة 7: بناء البصمات
+node "$SKILL\build-fingerprints.mjs" "$PROJECT\.codex-ray\intermediate\fingerprint-input.json"
+```
+
+> ⚠️ المراحل 2-6 تتطلب نموذج LLM لإنتاج الملخصات والتصنيفات. الطريقة A عبر Antigravity تتولى هذا تلقائياً.
+
+---
+
+## 🔄 ماذا يحصل في كل مرحلة؟
+
+```
+المشروع المُدخل
+    │
+    ▼
+┌─────────────────────────────────────┐
+│ المرحلة 0: التحضير                  │
+│ • تحديد مسار المشروع                │
+│ • قراءة README + package.json       │
+│ • قرار: تحليل كامل أم تدريجي       │
+└──────────────┬──────────────────────┘
+               ▼
+┌─────────────────────────────────────┐
+│ المرحلة 1: المسح (scan-project.mjs) │
+│ • اكتشاف كل الملفات                │
+│ • تحديد اللغة لكل ملف              │
+│ • تصنيف: code/config/docs/infra    │
+│ • استخراج خريطة الاستيراد           │
+│ ← الناتج: scan-result.json         │
+└──────────────┬──────────────────────┘
+               ▼
+┌─────────────────────────────────────┐
+│ المرحلة 1.5: التقسيم               │
+│ (compute-batches.mjs)               │
+│ • تقسيم الملفات لمجموعات 20-30 ملف │
+│ • ربط الجيران عبر المجموعات         │
+│ ← الناتج: batches.json             │
+└──────────────┬──────────────────────┘
+               ▼
+┌─────────────────────────────────────┐
+│ المرحلة 2: التحليل (5 متوازي)      │
+│ • Tree-sitter: دوال، كلاسات         │
+│ • LLM: ملخص، وسوم، تعقيد           │
+│ • إنتاج nodes + edges لكل ملف      │
+│ • دمج الكل: merge-batch-graphs.py  │
+│ ← الناتج: assembled-graph.json     │
+└──────────────┬──────────────────────┘
+               ▼
+┌─────────────────────────────────────┐
+│ المرحلة 3: مراجعة التجميع          │
+│ • فحص edges يتيمة                   │
+│ • فحص nodes بدون علاقات             │
+│ • تطابق مع نتائج المسح             │
+└──────────────┬──────────────────────┘
+               ▼
+┌─────────────────────────────────────┐
+│ المرحلة 4: التصنيف المعماري        │
+│ • تجميع بالمجلدات                   │
+│ • مطابقة أنماط: routes→API          │
+│ • تعيين 3-10 طبقات                  │
+│ ← الناتج: layers.json              │
+└──────────────┬──────────────────────┘
+               ▼
+┌─────────────────────────────────────┐
+│ المرحلة 5: الجولة التعليمية        │
+│ • تحديد نقطة الدخول                 │
+│ • BFS من Entry Point                │
+│ • 5-15 خطوة تعليمية مرتبة           │
+│ ← الناتج: tour.json                │
+└──────────────┬──────────────────────┘
+               ▼
+┌─────────────────────────────────────┐
+│ المرحلة 6: التحقق النهائي          │
+│ • 9 فحوصات جودة                     │
+│ • إصلاح تلقائي للمشاكل البسيطة     │
+│ • تقرير بالتحذيرات                  │
+└──────────────┬──────────────────────┘
+               ▼
+┌─────────────────────────────────────┐
+│ المرحلة 7: الحفظ                    │
+│ • كتابة knowledge-graph.json       │
+│ • كتابة meta.json (commit hash)    │
+│ • بناء بصمات للتحديث التدريجي      │
+│ • تنظيف الملفات المؤقتة             │
+└─────────────────────────────────────┘
+               ▼
+    .codex-ray/knowledge-graph.json ✅
 ```
 
 ---
 
-## الناتج
+## 📊 الناتج: knowledge-graph.json
 
-ملف `knowledge-graph.json` في مجلد `.codex-ray/` داخل المشروع المُحلل:
+ملف JSON واحد في `.codex-ray/knowledge-graph.json` يحتوي 4 أقسام:
+
+### 1. Nodes (العُقد) — كل عنصر في المشروع
 
 ```json
 {
-  "version": "1.0.0",
-  "project": {
-    "name": "my-project",
-    "languages": ["typescript", "python"],
-    "frameworks": ["React", "FastAPI"]
-  },
-  "nodes": [
-    {
-      "id": "file:src/auth/login.ts",
-      "type": "file",
-      "summary": "Handles JWT authentication flow",
-      "tags": ["auth", "security", "api-handler"],
-      "complexity": "moderate"
-    }
-  ],
-  "edges": [
-    {
-      "source": "file:src/app.ts",
-      "target": "file:src/auth/login.ts",
-      "type": "imports",
-      "weight": 0.7
-    }
-  ],
-  "layers": [
-    { "id": "layer:api", "name": "API Layer", "nodeIds": ["..."] }
-  ],
-  "tour": [
-    { "order": 1, "title": "Project Overview", "nodeIds": ["document:README.md"] }
-  ]
+  "id": "file:src/auth/login.ts",
+  "type": "file",
+  "name": "login.ts",
+  "filePath": "src/auth/login.ts",
+  "summary": "Handles user authentication with JWT tokens and session management",
+  "tags": ["auth", "security", "api-handler"],
+  "complexity": "moderate"
 }
 ```
+
+أنواع العُقد: `file` `function` `class` `config` `document` `service` `table` `endpoint` `pipeline` `schema` `resource` `domain` `flow` `step`
+
+### 2. Edges (الحواف) — كل علاقة بين العناصر
+
+```json
+{
+  "source": "file:src/app.ts",
+  "target": "file:src/auth/login.ts",
+  "type": "imports",
+  "direction": "forward",
+  "weight": 0.7
+}
+```
+
+أنواع العلاقات: `imports` `exports` `contains` `inherits` `implements` `calls` `depends_on` `tested_by` `configures` `deploys` `documents` `triggers` `defines_schema` `routes` `related`
+
+### 3. Layers (الطبقات) — التصنيف المعماري
+
+```json
+{
+  "id": "layer:api",
+  "name": "API Layer",
+  "description": "Route handlers, controllers, and HTTP endpoints",
+  "nodeIds": ["file:src/routes/auth.ts", "file:src/routes/users.ts"]
+}
+```
+
+### 4. Tour (الجولة) — دليل تعليمي مرتب
+
+```json
+{
+  "order": 1,
+  "title": "Project Overview",
+  "description": "Start with the README to understand the project's purpose",
+  "nodeIds": ["document:README.md"]
+}
+```
+
+---
+
+## 🎯 ماذا تفعل بعد التحليل؟
+
+بعد إنتاج `knowledge-graph.json`، اطلب من Antigravity:
+
+| الطلب | ماذا يحصل |
+|-------|-----------|
+| `"اسأل: وين يتم التحقق من المستخدم؟"` | يبحث في nodes بالـ tags والـ summary ويجيب |
+| `"لو غيرت auth.ts، شو يتأثر؟"` | يتتبع edges من الملف → كل الملفات المتأثرة |
+| `"اشرح ملف database.ts"` | يجمع معلومات الـ node + يقرأ الملف الفعلي → شرح عميق |
+| `"أنشئ دليل onboarding"` | يستخدم الـ tour لإنشاء دليل مطور جديد |
+| `"حلل منطق الأعمال"` | يستخرج domains وflows من الكود |
+| `"حلل تأثير آخر commit"` | يقارن git diff مع الـ graph → تقرير تأثير |
+| `"حدّث الـ graph"` | تحديث تدريجي — يحلل الملفات المتغيرة فقط |
+
+---
+
+## 🔄 التحديث التدريجي
+
+عند تغيير الكود، لا تحتاج إعادة تحليل كامل:
+
+```
+حدّث الـ knowledge graph
+```
+
+CodeX-Ray ستقارن الـ commit الحالي مع آخر تحليل، وتعيد تحليل **الملفات المتغيرة فقط**.
 
 ---
 
