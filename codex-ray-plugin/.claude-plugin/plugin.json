@@ -1,0 +1,18 @@
+﻿{
+  "name": "CodeX-Ray",
+  "description": "AI-powered codebase understanding — analyze, visualize, and explain any project",
+  "version": "2.7.5",
+  "author": {
+    "name": "Lum1104"
+  },
+  "homepage": "https://github.com/Lum1104/CodeX-Ray",
+  "repository": "https://github.com/Lum1104/CodeX-Ray",
+  "license": "MIT",
+  "keywords": [
+    "codebase-analysis",
+    "knowledge-graph",
+    "architecture",
+    "onboarding",
+    "dashboard"
+  ]
+}

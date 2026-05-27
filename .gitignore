@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.codex-ray/intermediate/
+.codex-ray/tmp/
+.codex-ray/diff-overlay.json
+*.log
+.DS_Store
+Thumbs.db
