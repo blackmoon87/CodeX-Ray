@@ -2,6 +2,7 @@
   "name": "codex-ray",
   "private": true,
   "type": "module",
+  "packageManager": "pnpm@10.6.2",
   "scripts": {
     "prepare": "pnpm --filter @codex-ray/core build",
     "build": "pnpm -r build",
