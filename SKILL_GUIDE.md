@@ -16,7 +16,9 @@ When the user says any of these, activate CodeX-Ray:
 - "analyze the project" / "analyze this codebase"
 - "understand this project" / "understand the code"
 - "create knowledge graph" / "map the codebase"
+- "update the graph" / "re-index" / "reanalyze changes" → use /understand-update
 - "حلل المشروع" / "افهم المشروع" / "خريطة الكود"
+- "حدّث الخريطة" / "أعد الفهرسة" → use /understand-update
 - "/understand" or any /understand-* command
 
 ## Prerequisites Check (run once per session)
@@ -120,6 +122,30 @@ Read knowledge-graph.json → search nodes/edges to answer user questions about 
 
 ### /understand-diff
 Read knowledge-graph.json + `git diff` → trace edges from changed files → report impact analysis.
+
+### /understand-update (Incremental Re-index)
+When the user says "update the graph", "re-index", "حدّث الخريطة", or "reanalyze changes":
+
+1. **Detect changes**: Run `git diff --name-only HEAD~N` (default N=5, or since last analysis via meta.json commit hash)
+2. **Load existing graph**: Read `$PROJECT_ROOT/.codex-ray/knowledge-graph.json`
+3. **Re-scan changed files only**:
+   ```bash
+   node "$SKILL_DIR/scan-project.mjs" "$PROJECT_ROOT" "$PROJECT_ROOT/.codex-ray/tmp/ua-scan-files.json"
+   ```
+4. **Filter**: From the scan output, keep only files that appear in the git diff list
+5. **Re-analyze changed files**:
+   - Run `extract-structure.mjs` on each changed file
+   - Read each changed file fully
+   - Generate updated: summary, tags, complexity, edges
+6. **Merge into existing graph**:
+   - Remove old nodes/edges for changed files
+   - Insert new nodes/edges
+   - Add nodes/edges for any NEW files
+   - Remove nodes/edges for DELETED files
+7. **Re-validate**: Run Phase 6 quality checks on the updated graph
+8. **Save**: Write updated `knowledge-graph.json` + update `meta.json` with new commit hash
+
+This is **much faster** than a full analysis — only changed files are re-processed.
 
 ### /understand-explain <file>
 Find node for file + read actual source → deep explanation combining graph context and code.
