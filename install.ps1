@@ -103,14 +103,15 @@ Write-OK "Repository ready"
 # --- Step 3: Install dependencies + Tree-sitter ---
 Write-Step 3 4 "Installing dependencies and Tree-sitter parsers..."
 Push-Location $PLUGIN_DIR
-pnpm install
+$env:COREPACK_ENABLE_STRICT = "0"
+pnpm install 2>$null
 Pop-Location
 Write-OK "Dependencies installed"
 
 # --- Step 4: Build core engine ---
 Write-Step 4 4 "Building CodeX-Ray core engine..."
 Push-Location $PLUGIN_DIR
-pnpm --filter @codex-ray/core build
+pnpm --filter @codex-ray/core build 2>$null
 Pop-Location
 Write-OK "Core engine built"
 
