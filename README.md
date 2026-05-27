@@ -5,6 +5,20 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+## ⚡ تثبيت سريع (أمر واحد)
+
+**ويندوز (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/blackmoon87/CodeX-Ray/main/install.ps1 | iex
+```
+
+**لينكس / ماك:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/blackmoon87/CodeX-Ray/main/install.sh | bash
+```
+
+> يتم التثبيت تلقائياً في `~/.codex-ray` — مسار ثابت مستقل عن أي مشروع.
+
 ---
 
 ## ما هي CodeX-Ray؟
